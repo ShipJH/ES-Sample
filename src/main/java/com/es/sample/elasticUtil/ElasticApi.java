@@ -44,6 +44,8 @@ public class ElasticApi {
             jsonString = jsonData;
         }
 
+        System.out.println(jsonString);
+        
         //엘라스틱서치에서 제공하는 restClient를 통해 엘라스틱서치에 접속한다
         try(RestClient restClient = RestClient.builder(new HttpHost(host, port)).build()) {
             
@@ -74,5 +76,15 @@ public class ElasticApi {
             result.put("resultBody", e.toString());
         }
         return result;
+    }
+    
+    
+    public Map<String,Object> testEs(){
+    	
+    	Map<String, Object> result = new HashMap<>();
+    	
+    	
+    	
+    	return result;
     }
 }

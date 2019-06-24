@@ -1,6 +1,8 @@
 package com.es.sample.controller;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +18,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.es.sample.elasticUtil.ElasticApi;
+import com.es.sample.elasticUtil.ElasticTypeEnum;
 import com.es.sample.entity.Account;
 import com.es.sample.request.AccountReq;
 import com.es.sample.request.AccountSaveReq;
-import com.es.sample.util.ObjectUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -31,14 +34,19 @@ import lombok.extern.java.Log;
 @RequestMapping("/user")
 public class EsRestController {
 
+	private final ElasticApi elasticApi;
 	@Autowired
-	ElasticApi elasticApi;
+	public EsRestController(ElasticApi elasticApi) {
+		this.elasticApi = elasticApi;	
+	}
 	
 	private final String ACCOUNT_URL = "bae/bae";
+	private final String INDEX_URL = "bae/";
+	
 	
 	@ApiOperation(value = "유저리스트 조회하기")
 	@GetMapping(value="/findByUser/{id}")
-	public ResponseEntity<Account> findByUser(@PathVariable String id){
+	public ResponseEntity<Map<String, Object>> findByUser(@PathVariable String id){
 		
 		String url = ACCOUNT_URL + "/" + id;
 		Map<String, Object> result = elasticApi.callElasticApi("GET", url, null, null);
@@ -46,9 +54,17 @@ public class EsRestController {
 		log.info("---------------------------------");
 		log.info(result.get("resultBody").toString());
 		
-		Account account = (Account) ObjectUtil.convertMapToObject(result, new Account());	
+		String strJson = result.get("resultBody").toString();
 		
-		return new ResponseEntity<>(account, HttpStatus.OK);
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> map = new HashMap<String, Object>();
+		try {
+			map = mapper.readValue(strJson, HashMap.class);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return new ResponseEntity<>(map, HttpStatus.OK);
 	}
 	
 	@ApiOperation(value = "유저 저장하기")
@@ -67,6 +83,7 @@ public class EsRestController {
 		log.info(result.get("resultCode").toString());
 		log.info("---------------------------------");
 		log.info(result.get("resultBody").toString());
+
 		
 		return new ResponseEntity<>(account, HttpStatus.OK);
 	}
@@ -90,6 +107,11 @@ public class EsRestController {
 		log.info("---------------------------------");
 		log.info(result.get("resultBody").toString());
 		
+		
+		System.out.println("@@@@");
+		System.out.println("@@@@ result >> " );
+		System.out.println("@@@@");
+		
 		return new ResponseEntity<>(account, HttpStatus.OK);
 	}
 	
@@ -110,5 +132,42 @@ public class EsRestController {
 	
 	
 	
+	@ApiOperation(value = "이메일 중복 체크")
+	@GetMapping(value="/duplUserChk/{email}/")
+	public ResponseEntity<?> DuplUserChk(@PathVariable String email){
+		
+		String url = INDEX_URL + ElasticTypeEnum._SEARCH.getType();
+//		GET /bae/_search?pretty
+//				{
+//				  "query": {
+//				      "term": {
+//				        "email.keyword": {
+//				          "value": "baejh@naver.com"
+//				        }
+//				      }
+//				    
+//				  }
+//				}
+		
+//		baejh@naver.com
+//		(String method, String url, Object obj, String jsonData)
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("{\"query\": { ");
+		sb.append(" 	\"term\": {");
+		sb.append("			\"email.keyword\": { ");
+		sb.append("				\"value\": "+ email);
+		sb.append("			}");
+		sb.append("		}");
+		sb.append("	}");
+		sb.append("}");
+		
+		Map<String, Object> result = elasticApi.callElasticApi("GET", url, null, sb.toString());
+		
+		System.out.println("@@@@");
+		
+		
+		return new ResponseEntity<>(email, HttpStatus.OK);
+	}
 	
 }
