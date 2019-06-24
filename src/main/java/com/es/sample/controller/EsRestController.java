@@ -156,7 +156,7 @@ public class EsRestController {
 		sb.append("{\"query\": { ");
 		sb.append(" 	\"term\": {");
 		sb.append("			\"email.keyword\": { ");
-		sb.append("				\"value\": "+ email);
+		sb.append("				\"value\": \""+ email + "\"");
 		sb.append("			}");
 		sb.append("		}");
 		sb.append("	}");
