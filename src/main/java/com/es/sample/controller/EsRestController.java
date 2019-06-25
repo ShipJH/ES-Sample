@@ -22,6 +22,7 @@ import com.es.sample.elasticUtil.ElasticTypeEnum;
 import com.es.sample.entity.Account;
 import com.es.sample.request.AccountReq;
 import com.es.sample.request.AccountSaveReq;
+import com.es.sample.util.MsgEum;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.annotations.Api;
@@ -131,43 +132,34 @@ public class EsRestController {
 	
 	
 	
-	
 	@ApiOperation(value = "이메일 중복 체크")
 	@GetMapping(value="/duplUserChk/{email}/")
 	public ResponseEntity<?> DuplUserChk(@PathVariable String email){
 		
 		String url = INDEX_URL + ElasticTypeEnum._SEARCH.getType();
-//		GET /bae/_search?pretty
-//				{
-//				  "query": {
-//				      "term": {
-//				        "email.keyword": {
-//				          "value": "baejh@naver.com"
-//				        }
-//				      }
-//				    
-//				  }
-//				}
-		
-//		baejh@naver.com
-//		(String method, String url, Object obj, String jsonData)
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append("{\"query\": { ");
 		sb.append(" 	\"term\": {");
 		sb.append("			\"email.keyword\": { ");
-		sb.append("				\"value\": "+ email);
+		sb.append("				\"value\": \""+ email+"\"");
 		sb.append("			}");
 		sb.append("		}");
 		sb.append("	}");
 		sb.append("}");
-		
-		Map<String, Object> result = elasticApi.callElasticApi("GET", url, null, sb.toString());
-		
-		System.out.println("@@@@");
+
+		Map<String, Object> result = elasticApi.getSearch(url, sb.toString());
 		
 		
-		return new ResponseEntity<>(email, HttpStatus.OK);
+		Object a = result.get("hits");
+		
+		System.out.println("@@@");
+		System.out.println("size :  " +  result.size() );
+		System.out.println("@@@");
+		
+		//result.put("msg", MsgEum.DUPLICATION.getMsg());
+		
+		return new ResponseEntity<>(result, HttpStatus.OK);
 	}
 	
 }

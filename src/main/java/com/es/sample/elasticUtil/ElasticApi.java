@@ -79,12 +79,46 @@ public class ElasticApi {
     }
     
     
-    public Map<String,Object> testEs(){
+	/**
+	 * GET방식으로 호출하여 ES문법에 맞게끔 넣어줘서 결과값을 반환하는 메서드.
+	 * @param url [url 규칙 ex: _search , _cat 등 ..]
+	 * @param strJsonParam [json형태의 파라미터를 넘겨야 됩니다.]
+	 * @return
+	 */
+    public Map<String,Object> getSearch(String url, String strJsonParam){
     	
-    	Map<String, Object> result = new HashMap<>();
+		Map<String, Object> result = new HashMap<>();
     	
-    	
+        //엘라스틱서치에서 제공하는 restClient를 통해 엘라스틱서치에 접속한다
+        try(RestClient restClient = RestClient.builder(new HttpHost(host, port)).build()) {
+            
+            Request request = new Request("GET",url);
+            request.addParameter("pretty", "true"); //Map<String, String> params =  Collections.singletonMap("pretty", "true");
+            Response response = null; //엘라스틱서치에서 제공하는 response 객체
+
+			request.setEntity(new NStringEntity(strJsonParam, ContentType.APPLICATION_JSON));
+            response = restClient.performRequest(request); 
+
+            //앨라스틱서치에서 리턴되는 응답코드를 받는다
+            int statusCode = response.getStatusLine().getStatusCode();
+            //엘라스틱서치에서 리턴되는 응답메시지를 받는다
+            String responseBody = EntityUtils.toString(response.getEntity());
+            result.put("resultCode", statusCode);
+            result.put("resultBody", responseBody);
+        } catch (Exception e) {
+            result.put("resultCode", -1);
+            result.put("resultBody", e.toString());
+        }
     	
     	return result;
     }
+    
+    
+    
+    
+    
 }
+
+
+
+
