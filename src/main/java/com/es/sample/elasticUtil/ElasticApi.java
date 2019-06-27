@@ -96,8 +96,11 @@ public class ElasticApi {
             request.addParameter("pretty", "true"); //Map<String, String> params =  Collections.singletonMap("pretty", "true");
             Response response = null; //엘라스틱서치에서 제공하는 response 객체
 
-			request.setEntity(new NStringEntity(strJsonParam, ContentType.APPLICATION_JSON));
-            response = restClient.performRequest(request); 
+            if(strJsonParam != null) {
+            	request.setEntity(new NStringEntity(strJsonParam, ContentType.APPLICATION_JSON));	
+            }
+            
+			response = restClient.performRequest(request); 
 
             //앨라스틱서치에서 리턴되는 응답코드를 받는다
             int statusCode = response.getStatusLine().getStatusCode();

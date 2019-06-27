@@ -2,9 +2,14 @@ package com.es.sample.controller;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +27,7 @@ import com.es.sample.elasticUtil.ElasticTypeEnum;
 import com.es.sample.entity.Account;
 import com.es.sample.request.AccountReq;
 import com.es.sample.request.AccountSaveReq;
+import com.es.sample.response.AccountResponse;
 import com.es.sample.util.MsgEum;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -45,15 +51,12 @@ public class EsRestController {
 	private final String INDEX_URL = "bae/";
 	
 	
-	@ApiOperation(value = "유저리스트 조회하기")
+	@ApiOperation(value = "유저 조회하기")
 	@GetMapping(value="/findByUser/{id}")
 	public ResponseEntity<Map<String, Object>> findByUser(@PathVariable String id){
 		
 		String url = ACCOUNT_URL + "/" + id;
 		Map<String, Object> result = elasticApi.callElasticApi("GET", url, null, null);
-		log.info(result.get("resultCode").toString());
-		log.info("---------------------------------");
-		log.info(result.get("resultBody").toString());
 		
 		String strJson = result.get("resultBody").toString();
 		
@@ -133,8 +136,8 @@ public class EsRestController {
 	
 	
 	@ApiOperation(value = "이메일 중복 체크")
-	@GetMapping(value="/duplUserChk/{email}/")
-	public ResponseEntity<?> DuplUserChk(@PathVariable String email){
+	@GetMapping(value="/duplUserChk/{email}/", produces = "text/plain;charset=UTF-8")
+	public ResponseEntity<String> DuplUserChk(@PathVariable String email) throws JSONException{
 		
 		String url = INDEX_URL + ElasticTypeEnum._SEARCH.getType();
 		
@@ -150,16 +153,101 @@ public class EsRestController {
 
 		Map<String, Object> result = elasticApi.getSearch(url, sb.toString());
 		
+		String strJson = result.get("resultBody").toString();
 		
-		Object a = result.get("hits");
+		JSONObject jsonObj = new JSONObject(strJson);
+		JSONObject hitJson = (JSONObject) jsonObj.get("hits");
+		JSONObject totalJson = (JSONObject) hitJson.get("total");
+		int val = (int) totalJson.get("value");
 		
-		System.out.println("@@@");
-		System.out.println("size :  " +  result.size() );
-		System.out.println("@@@");
+		String msg = val != 1 ? MsgEum.USE.getMsg() : MsgEum.DUPLICATION.getMsg() ;
 		
-		//result.put("msg", MsgEum.DUPLICATION.getMsg());
-		
-		return new ResponseEntity<>(result, HttpStatus.OK);
+		return new ResponseEntity<>(msg, HttpStatus.OK);
 	}
 	
+	@ApiOperation(value = "모든 유저 조회하기")
+	@GetMapping(value="/findAllUser")
+	public ResponseEntity<List<AccountResponse>> findAllUser() throws JSONException{
+		
+		String url = INDEX_URL + ElasticTypeEnum._SEARCH.getType();
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append(" { " );
+		sb.append("     \"query\" : { " );
+		sb.append("         \"match_all\" : {} " );
+		sb.append("     } " );
+		sb.append(" } " );
+		
+		Map<String, Object> result = elasticApi.getSearch(url, null);
+		
+		
+		JSONObject jsonObj = new JSONObject(result.get("resultBody").toString());
+		JSONArray jsonResultArray = jsonObj.getJSONObject("hits").getJSONArray("hits");
+		
+		List<AccountResponse> response = new ArrayList<>();
+		JSONObject obj = null;
+		JSONObject responseJsonObj = null;
+		for(int i=0; i < jsonResultArray.length(); i++) {
+			
+			obj = (JSONObject) jsonResultArray.get(i);
+			responseJsonObj = (JSONObject) obj.get("_source");
+			
+			response.add(AccountResponse.builder()
+										.name(responseJsonObj.get("name").toString())
+										.email(responseJsonObj.get("email").toString())
+										.build());
+		}
+		
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	
+	
+	@ApiOperation(value = "모든 필드에서 검색어 조회하기")
+	@GetMapping(value="/findAllField/{param}")
+	public ResponseEntity<List<AccountResponse>> findAllField(@PathVariable String param) throws JSONException{
+		
+		
+		String url = INDEX_URL + ElasticTypeEnum._SEARCH.getType();
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append(" { ");
+		sb.append("   \"query\": { \"query_string\": { \"query\": \"*"+param+"*\" } } ");
+		sb.append(" } ");
+		
+		Map<String, Object> result = elasticApi.getSearch(url, sb.toString());
+		
+		JSONObject jsonObj = new JSONObject(result.get("resultBody").toString());
+		JSONArray jsonResultArray = jsonObj.getJSONObject("hits").getJSONArray("hits");
+		
+		List<AccountResponse> response = new ArrayList<>();
+		JSONObject obj = null;
+		JSONObject responseJsonObj = null;
+		for(int i=0; i < jsonResultArray.length(); i++) {
+			
+			obj = (JSONObject) jsonResultArray.get(i);
+			responseJsonObj = (JSONObject) obj.get("_source");
+			
+			response.add(AccountResponse.builder()
+										.name(responseJsonObj.get("name").toString())
+										.email(responseJsonObj.get("email").toString())
+										.build());
+		}
+		
+		return new ResponseEntity<>(response, HttpStatus.OK);
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
 }
+
+
+
+
+
