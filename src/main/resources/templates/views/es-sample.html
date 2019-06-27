@@ -18,6 +18,17 @@
 		$('#innerDiv').html("zzzdzdz");
 	});
 
+	$.get( "/person/findAllUser", function(data) {
+		
+	    alert( "success" );
+	}, 'json' /* xml, text, script, html */)
+	.fail(function(jqXHR) {
+	    alert( "error" );
+	});
+
+
+// 	
+// 	$.get
 	
 
 </script>

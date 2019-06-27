@@ -116,12 +116,14 @@ public class EsRestController2 {
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append(" { " );
-		sb.append("     \"query\" : { " );
-		sb.append("         \"match_all\" : {} " );
-		sb.append("     } " );
+		sb.append(" \"size\": 100,  " );
+		sb.append("  \"query\": { " );
+		sb.append("  \"match_all\": {} " );
+		sb.append("  } " );
 		sb.append(" } " );
 		
-		Map<String, Object> result = elasticApi.getSearch(url, null);
+		
+		Map<String, Object> result = elasticApi.getSearch(url, sb.toString());
 		
 		
 		JSONObject jsonObj = new JSONObject(result.get("resultBody").toString());
@@ -142,7 +144,7 @@ public class EsRestController2 {
 										.age(responseJsonObj.getInt("age"))
 										.gender(responseJsonObj.get("gender").toString())
 										.hobby(responseJsonObj.get("hobby").toString())
-										.joindate(responseJsonObj.get("joindate").toString())
+//										.joindate(responseJsonObj.get("joindate").toString())
 										.build());
 		}
 		
