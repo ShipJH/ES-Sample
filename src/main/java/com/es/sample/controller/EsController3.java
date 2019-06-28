@@ -7,10 +7,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @Controller
 public class EsController3 {
 
-	@RequestMapping(value = "/zzz", method = RequestMethod.GET)
-    public String test() {
+	@RequestMapping(value = "/self", method = RequestMethod.GET)
+    public String self() {
     		
     	return "views/es-sample";
     }
+	
+	
 	
 }

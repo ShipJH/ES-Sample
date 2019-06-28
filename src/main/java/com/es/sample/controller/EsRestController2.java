@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +22,6 @@ import com.es.sample.elasticUtil.ElasticApi;
 import com.es.sample.elasticUtil.ElasticTypeEnum;
 import com.es.sample.entity.Person;
 import com.es.sample.request.PersonSaveReq;
-import com.es.sample.response.AccountResponse;
 import com.es.sample.response.PersonResponse;
 import com.es.sample.util.FormatUtil;
 
@@ -34,7 +34,7 @@ import lombok.extern.java.Log;
 @Api(tags = "고객 정보", value = "고객 정보", description = "고객 정보")
 @RequestMapping("/person")
 public class EsRestController2 {
-
+	
 	private final ElasticApi elasticApi;
 	@Autowired
 	public EsRestController2(ElasticApi elasticApi) {
@@ -46,8 +46,10 @@ public class EsRestController2 {
 	
 	
 	@ApiOperation(value = "사람 저장하기")
-	@PostMapping(value="/insertPerson")
-	public ResponseEntity<Person> insertPerson(@RequestBody PersonSaveReq personSaveReq){
+	@PostMapping(value="/insertPerson",
+	        consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, 
+	        produces = {MediaType.APPLICATION_ATOM_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+	public ResponseEntity<Person> insertPerson(PersonSaveReq personSaveReq){
 
 		String url = PERSON_URL;
 		
@@ -71,16 +73,16 @@ public class EsRestController2 {
 		return new ResponseEntity<>(person, HttpStatus.OK);
 	}
 	
-	
 	@ApiOperation(value = "모든 필드에서 검색어 조회하기")
 	@GetMapping(value="/findAllField/{param}")
-	public ResponseEntity<List<AccountResponse>> findAllField(@PathVariable String param) throws JSONException{
+	public ResponseEntity<List<PersonResponse>> findAllField(@PathVariable String param) throws JSONException{
 		
 		
 		String url = INDEX_URL + ElasticTypeEnum._SEARCH.getType();
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append(" { ");
+		sb.append(" \"size\": 100,  " );
 		sb.append("   \"query\": { \"query_string\": { \"query\": \"*"+param+"*\" } } ");
 		sb.append(" } ");
 		
@@ -89,7 +91,7 @@ public class EsRestController2 {
 		JSONObject jsonObj = new JSONObject(result.get("resultBody").toString());
 		JSONArray jsonResultArray = jsonObj.getJSONObject("hits").getJSONArray("hits");
 		
-		List<AccountResponse> response = new ArrayList<>();
+		List<PersonResponse> response = new ArrayList<>();
 		JSONObject obj = null;
 		JSONObject responseJsonObj = null;
 		for(int i=0; i < jsonResultArray.length(); i++) {
@@ -97,9 +99,13 @@ public class EsRestController2 {
 			obj = (JSONObject) jsonResultArray.get(i);
 			responseJsonObj = (JSONObject) obj.get("_source");
 			
-			response.add(AccountResponse.builder()
+			response.add(PersonResponse.builder()
 										.name(responseJsonObj.get("name").toString())
 										.email(responseJsonObj.get("email").toString())
+										.nation(responseJsonObj.get("nation").toString())
+										.age(responseJsonObj.getInt("age"))
+										.gender(responseJsonObj.get("gender").toString())
+										.hobby(responseJsonObj.get("hobby").toString())
 										.build());
 		}
 		

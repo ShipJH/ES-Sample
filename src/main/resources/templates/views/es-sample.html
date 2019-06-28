@@ -14,36 +14,167 @@
 
 
 	$( document ).ready(function() {
-		alert("z");
-		$('#innerDiv').html("zzzdzdz");
+		getList(null);
+		$('#saveDiv').hide();
 	});
 
-	$.get( "/person/findAllUser", function(data) {
-		
-	    alert( "success" );
-	}, 'json' /* xml, text, script, html */)
-	.fail(function(jqXHR) {
-	    alert( "error" );
-	});
-
-
-// 	
-// 	$.get
 	
+	function getList(val){
+		
+		var url;
+		if(isEmpty(val)){
+			url= '/person/findAllField/'+val;	
+		}else{
+			url= "/person/findAllUser";	
+		}
+		
+		$.get( url, function(data) {
+			
+			
+			var innerHtml;
+			if(data != null){
+				
+				$('#innerBody').empty();
+				
+				$.each(data , function(indexInArray, entry) {
+					innerHtml += ' <tr> ';
+					innerHtml += '   <td>'+entry.name+'</td> ';
+					innerHtml += '   <td>'+entry.email+'</td> ';
+					innerHtml += '   <td>'+entry.nation+'</td> ';
+					innerHtml += '   <td>'+entry.age+'</td> ';
+					innerHtml += '   <td>'+entry.gender+'</td> ';
+					innerHtml += '   <td>'+entry.hobby+'</td> ';
+					innerHtml += ' </tr> ';	
+				});
 
+				$('#innerBody').html(innerHtml);
+				
+			}else{
+				alert("조회된값없다");
+			}
+
+		}, 'json' /* xml, text, script, html */)
+		.fail(function(jqXHR) {
+			
+		    alert( "error" );
+		    
+		});
+		
+	}//end of getList()---
+	
+	
+	function search(){
+		
+		getList($('#searchVal').val());
+		
+	}
+	
+	//검색조건 엔터에대한 이벤트
+	function enterEvent(){
+	    if(event.keyCode == 13){
+	    	search(); 
+	   }
+	}
+
+
+	// 공백유무 판단 "" 인지 아닌지. 널도
+	function isEmpty(value){
+
+		var length = value.replace(/\s/gi, '').length;
+		
+		if(length < 1){
+			return false;
+		}else{
+			return true;
+		}
+
+	}
+
+
+	function showSave(){
+		
+		$('#saveDiv').show();
+		
+	}
+	
+	
+	function save(){
+		
+		var personSaveReq = $('#frm').serialize();
+		
+// 		$.post('/person/insertPerson',personSaveReq,function(data){
+
+// 			alert("zz");				
+// 		},'text')
+// 		.fail(function(data) {
+// 	   		switch (data.status) {
+// 	   	    default :
+// 	   	    	alert("예기치 못한 오류가 발생했습니다. 관리자에게 문의하세요.");
+// 	   	    	break;
+// 	   		}
+// 		});
+		
+		
+		$.ajax({
+			type: "POST",
+// 		    contentType: 'application/json',
+		    data : personSaveReq,
+		    dataType   : 'json',
+		    url        : '/person/insertPerson',
+		    error      : function(json){
+		        alert('저장중 오류가 발생하였습니다');
+		    },
+		    success    : function(data){
+		    	alert("저장완료");
+				$('#saveDiv').hide();
+		    }
+		});
+
+		
+	}
+	
 </script>
 
 <body>
 	
 	
-	<div id="innerDiv">
+	검색어 : 
+	<input type="text" id="searchVal" name="searchVal" onkeydown="JavaScript:enterEvent();"/> 
+	<input type="button" value="검색" onclick="search();"/>
+	<input type="button" value="저장하기" onclick="showSave();"/>
 	
+	</br>
+	</br>
+	<div style="" id="saveDiv" hidden="hidden">
+		
+		<form id="frm">
+			이름: <input type="text" name="name" /></br>
+			이메일: <input type="text" name="email" /></br>
+			국가: <input type="text" name="nation" /></br>
+			나이: <input type="text" name="age" /></br>
+			성별: <select name="gender"><option value="man">남자</option> <option value="woman">여자</option> </select> </br>
+			취미: <input type="text" name="hobby"/>
+		</form>
+		<input type="button" value="저장하기" onclick="save();"/>		
+		
 	</div>
 	
-	<table id="innerTable"> 
-		
+	
+	<table> 
+ 		<tr class="th">
+            <th>이름</th>
+            <th>이메일</th>
+            <th>지역</th>
+            <th>나이</th>
+            <th>성별</th>
+            <th>취미</th>
+        </tr>
+        <tbody id="innerBody">
+			<!-- innerspace -->
+	    </tbody>		
 	
 	</table>
+
 
 
 
